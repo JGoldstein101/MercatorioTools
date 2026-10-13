@@ -1,9 +1,15 @@
 ﻿@inject PlayerContainer playerContainer
 @page "/PlayerInfo"
-@rendermode InteractiveServer
+@using Newtonsoft.Json
 
 <title>Player info</title>
-<h1>@playerContainer.playerInfo.household.Name</h1>
+<h1>@(playerContainer.playerData?.household?.name ?? "Player")</h1>
+<p>@jsonText</p>
 @code {
+    private string jsonText = "";
 
+    protected override void OnInitialized()
+    {
+        jsonText = playerContainer.playerData is null ? "No player data loaded" : JsonConvert.SerializeObject(playerContainer.playerData, Formatting.Indented);
+    }
 }

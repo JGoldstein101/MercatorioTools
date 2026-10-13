@@ -1,24 +1,34 @@
 ﻿@inject PlayerContainer playerContainer
 @page "/"
-@using System.Text.Json
-@rendermode InteractiveServer
+@using Newtonsoft.Json
 
 <PageTitle>Home</PageTitle>
 
 <h1>Mercatorio tools</h1>
 Something something mercatorio line go up
-<input type="text" @bind="apiKey"/>
-<input type="text" @bind="userEmail"/>
-<button @onclick="saveInfo">
-    Save
-</button>
-
+<div>
+    <input type="text" @bind="apiKey" placeholder="Enter API key"/>
+</div>
+<div>
+    <input type="text" @bind="userEmail" placeholder="Enter email"/>
+</div>
+<div>
+    <button @onclick="saveInfo">Save</button>
+</div>
+@if(dataSaved)
+{
+    <div>
+        <p role="status">Saved!</p>
+    </div>
+}
 @code {
-    private string apiKey = "Enter api key here";
-    private string userEmail = "Enter email here";
+    private string apiKey = "";
+    private string userEmail = "";
+    private bool dataSaved = false;
 
-    private async void saveInfo()
+    private async Task saveInfo()
     {
+        dataSaved = false;
         playerContainer.apiKey = apiKey;
         playerContainer.apiEmail = userEmail;
 
@@ -38,15 +48,12 @@ Something something mercatorio line go up
             {
                 response.EnsureSuccessStatusCode();
                 var body = await response.Content.ReadAsStringAsync();
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                };
-                PlayerData playerData = JsonSerializer.Deserialize<PlayerData>(body, options)
+                PlayerData playerData = JsonConvert.DeserializeObject<PlayerData>(body)
                     ?? throw new JsonException("The player response was empty.");
-                playerContainer.playerInfo = playerData;
-            }
+                playerContainer.playerData = playerData;
+            }   
         }
+        dataSaved = true;
 
     }
 }
