@@ -1,4 +1,4 @@
-﻿namespace MercatorioAnalyzer;
+﻿namespace MercatorioAnalyzer.Data.Entity;
 
 using System;
 using System.Collections.Generic;

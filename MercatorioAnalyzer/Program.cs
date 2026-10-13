@@ -1,5 +1,7 @@
 using MercatorioAnalyzer;
 using MercatorioAnalyzer.Components;
+using MercatorioAnalyzer.Data.Client;
+using MercatorioAnalyzer.Data.Entity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +10,10 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 //Add our PlayerContainer
 builder.Services.AddScoped<PlayerContainer>();
+builder.Services.AddHttpClient<MercatorioApiClient>(client =>
+{
+    client.BaseAddress = new Uri("https://play.mercatorio.io/api/");
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

@@ -1,5 +1,7 @@
 ﻿@inject PlayerContainer playerContainer
+@inject MercatorioApiClient apiClient
 @page "/"
+@using MercatorioAnalyzer.Data.Client
 @using Newtonsoft.Json
 
 <PageTitle>Home</PageTitle>
@@ -32,27 +34,8 @@ Something something mercatorio line go up
         playerContainer.apiKey = apiKey;
         playerContainer.apiEmail = userEmail;
 
-        using (var client = new HttpClient())
-        {
-            var request = new HttpRequestMessage
-            {
-                Method = HttpMethod.Get,
-                RequestUri = new Uri("https://play.mercatorio.io/api/player"),
-                Headers =
-                {
-                    {"X-Merc-User", userEmail},
-                    {"Authorization", "Bearer " + apiKey},
-                },
-            };
-            using (var response = await client.SendAsync(request))
-            {
-                response.EnsureSuccessStatusCode();
-                var body = await response.Content.ReadAsStringAsync();
-                PlayerData playerData = JsonConvert.DeserializeObject<PlayerData>(body)
-                    ?? throw new JsonException("The player response was empty.");
-                playerContainer.playerData = playerData;
-            }   
-        }
+        playerContainer.playerData = await apiClient.GetPlayerDataAsync();
+
         dataSaved = true;
 
     }
