@@ -12,6 +12,12 @@ public class MercatorioApiClient(
         string _dataPath,
         HttpMethod? _method = null)
     {
+        //Make sure the player info is set up
+        if(String.IsNullOrWhiteSpace(playerContainer.apiEmail) || String.IsNullOrWhiteSpace(playerContainer.apiKey))
+        {
+            throw new InvalidOperationException("Mercatorio creds not set");
+        }
+
         var requestmethod = _method ?? HttpMethod.Get;
         using (var request = new HttpRequestMessage
         {
@@ -35,11 +41,7 @@ public class MercatorioApiClient(
 
     public async Task<PlayerData> GetPlayerDataAsync()
     {
-        //Make sure the player info is set up
-        if(String.IsNullOrWhiteSpace(playerContainer.apiEmail) || String.IsNullOrWhiteSpace(playerContainer.apiKey))
-        {
-            throw new InvalidOperationException("Mercatorio creds not set");
-        }
+
         var body = await makeRequest("player");
 
         PlayerData playerData = JsonConvert.DeserializeObject<PlayerData>(body)
@@ -47,5 +49,13 @@ public class MercatorioApiClient(
 
         return playerData;
 
+    }
+    
+    public async Task<List<Recipe>> GetRecipesAsync()
+    {
+        var body = await makeRequest("config/recipes");
+        var recipeDictionary = JsonConvert.DeserializeObject<Dictionary<string, Recipe>>(body) ?? throw new JsonException("The recipe response was empty");
+        List<Recipe> recipes = recipeDictionary.Values.ToList<Recipe>(); 
+        return recipes;
     }
 }

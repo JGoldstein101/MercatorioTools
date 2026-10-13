@@ -1,0 +1,57 @@
+@page "/recipes/details"
+@using MercatorioAnalyzer.Data.Entity
+@using Microsoft.EntityFrameworkCore
+@using Newtonsoft.Json
+@inject IDbContextFactory<MercatorioAnalyzer.Data.Client.MercatorioSqliteDBContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Recipe</h2>
+    <hr />
+    @if (recipe is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Tier</dt>
+            <dd class="col-sm-10">@recipe.Tier</dd>
+            <dt class="col-sm-2">Site</dt>
+            <dd class="col-sm-10">@recipe.Site</dd>
+            <dt class="col-sm-2">Class</dt>
+            <dd class="col-sm-10">@recipe.Class</dd>
+            <dt class="col-sm-2">Points</dt>
+            <dd class="col-sm-10">@recipe.Points</dd>
+            <dt class="col-sm-2">Inputs</dt>
+            <dd class="col-sm-10">@JsonConvert.SerializeObject(recipe.Inputs)</dd>
+            <dt class="col-sm-2">Outputs</dt>
+            <dd class="col-sm-10">@JsonConvert.SerializeObject(recipe.Outputs)</dd>
+        </dl>
+        <div>
+            <a href="@($"/recipes/edit?name={recipe.Name}")">Edit</a> |
+            <a href="@($"/recipes")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Recipe? recipe;
+
+    [SupplyParameterFromQuery]
+    private string Name { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        recipe = await context.Recipe.FirstOrDefaultAsync(m => m.Name == Name);
+
+        if (recipe is null)
+        {
+            NavigationManager.NotFound();
+        }
+    }
+}
