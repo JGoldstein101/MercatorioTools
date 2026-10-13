@@ -1,9 +1,52 @@
 ﻿@inject PlayerContainer playerContainer
 @page "/"
+@using System.Text.Json
 @rendermode InteractiveServer
 
 <PageTitle>Home</PageTitle>
 
 <h1>Mercatorio tools</h1>
 Something something mercatorio line go up
-<input type="text" @bind="playerContainer.apiKey"/>
+<input type="text" @bind="apiKey"/>
+<input type="text" @bind="userEmail"/>
+<button @onclick="saveInfo">
+    Save
+</button>
+
+@code {
+    private string apiKey = "Enter api key here";
+    private string userEmail = "Enter email here";
+
+    private async void saveInfo()
+    {
+        playerContainer.apiKey = apiKey;
+        playerContainer.apiEmail = userEmail;
+
+        using (var client = new HttpClient())
+        {
+            var request = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri("https://play.mercatorio.io/api/player"),
+                Headers =
+                {
+                    {"X-Merc-User", userEmail},
+                    {"Authorization", "Bearer " + apiKey},
+                },
+            };
+            using (var response = await client.SendAsync(request))
+            {
+                response.EnsureSuccessStatusCode();
+                var body = await response.Content.ReadAsStringAsync();
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+                PlayerData playerData = JsonSerializer.Deserialize<PlayerData>(body, options)
+                    ?? throw new JsonException("The player response was empty.");
+                playerContainer.playerInfo = playerData;
+            }
+        }
+
+    }
+}
