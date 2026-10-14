@@ -1,4 +1,5 @@
 ﻿@inject PlayerContainer playerContainer
+@inject Storehouse storehouse
 @inject MercatorioApiClient apiClient
 @page "/"
 @using MercatorioAnalyzer.Data.Client
@@ -9,10 +10,10 @@
 <h1>Mercatorio tools</h1>
 Something something mercatorio line go up
 <div>
-    <input type="text" @bind="apiKey" placeholder="Enter API key"/>
+    <input type="text" @bind="playerContainer.apiKey" placeholder="Enter API key"/>
 </div>
 <div>
-    <input type="text" @bind="userEmail" placeholder="Enter email"/>
+    <input type="text" @bind="playerContainer.apiEmail" placeholder="Enter email"/>
 </div>
 <div>
     <button @onclick="saveInfo">Save</button>
@@ -24,18 +25,14 @@ Something something mercatorio line go up
     </div>
 }
 @code {
-    private string apiKey = "";
-    private string userEmail = "";
     private bool dataSaved = false;
 
     private async Task saveInfo()
     {
         dataSaved = false;
-        playerContainer.apiKey = apiKey;
-        playerContainer.apiEmail = userEmail;
 
         playerContainer.playerData = await apiClient.GetPlayerDataAsync();
-
+        storehouse.building = await apiClient.GetStorehouse();
         dataSaved = true;
 
     }

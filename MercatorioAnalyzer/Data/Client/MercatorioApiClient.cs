@@ -58,4 +58,16 @@ public class MercatorioApiClient(
         List<Recipe> recipes = recipeDictionary.Values.ToList<Recipe>(); 
         return recipes;
     }
+
+    public async Task<Building> GetBuildingAsync(string buildingId)
+    {
+        var body = await makeRequest("buildings/" + buildingId);
+        var buildingObject = JsonConvert.DeserializeObject<Building>(body) ?? throw new InvalidDataException("Building response was invalid");
+        return buildingObject;
+    }
+
+    public async Task<Building> GetStorehouse()
+    {
+        return await GetBuildingAsync(playerContainer.playerData.household.sustenance.providerId);
+    }
 }

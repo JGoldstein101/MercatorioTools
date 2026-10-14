@@ -18,6 +18,8 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 //Add our PlayerContainer
 builder.Services.AddScoped<PlayerContainer>();
+//Add the storehouse buildings so we can use it later
+builder.Services.AddScoped<Storehouse>();
 builder.Services.AddHttpClient<MercatorioApiClient>(client =>
 {
     client.BaseAddress = new Uri("https://play.mercatorio.io/api/");

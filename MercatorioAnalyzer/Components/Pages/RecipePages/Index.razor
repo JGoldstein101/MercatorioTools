@@ -24,10 +24,10 @@
     <PropertyColumn Property="recipe => recipe.Class" />
     <PropertyColumn Property="recipe => recipe.Points" />
     <TemplateColumn Title="Inputs" Context="recipe">
-        @JsonConvert.SerializeObject(recipe.Inputs)
+        @FormatRecipeItems(recipe.Inputs)
     </TemplateColumn>
     <TemplateColumn Title="Outputs" Context="recipe">
-        @JsonConvert.SerializeObject(recipe.Outputs)
+        @FormatRecipeItems(recipe.Outputs)
     </TemplateColumn>
     <TemplateColumn Context="recipe">
         <a href="@($"recipes/edit?name={recipe.Name}")">Edit</a> |
@@ -68,5 +68,10 @@
         {
             await recipeGrid.RefreshDataAsync();
         }
+    }
+
+    private string FormatRecipeItems(List<RecipeItem> recipeItems)
+    {
+        return string.Join(", ", recipeItems.Select(item => String.Format("{0} {1}",item.Amount, item.Product)));
     }
 }
