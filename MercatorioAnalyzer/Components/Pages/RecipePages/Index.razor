@@ -8,7 +8,7 @@
 @inject IDbContextFactory<MercatorioAnalyzer.Data.Client.MercatorioSqliteDBContext> DbFactory
 @inject MercatorioApiClient mercatorioApiClient
 @inject NavigationManager NavigationManager
-
+@inject Storehouse storehouse
 <PageTitle>Recipes</PageTitle>
 
 <h1>Recipes</h1>
@@ -16,29 +16,35 @@
 <div>
     <button @onclick="SyncRecipes">Sync now</button>
 </div>
-
-<QuickGrid @ref="recipeGrid" Class="table" Items="context.Recipe">
+<div>
+    <input typer="search" @bind="recipeFilter" @bind:event="oninput">
+</div>
+<QuickGrid @ref="recipeGrid" Class="table" Items="FilteredRecipes" Pagination="pagination" >
     <PropertyColumn Property="recipe => recipe.Name" />
-    <PropertyColumn Property="recipe => recipe.Tier" />
+    <PropertyColumn Property="recipe => recipe.Tier" Sortable="true"/>
     <PropertyColumn Property="recipe => recipe.Site" />
     <PropertyColumn Property="recipe => recipe.Class" />
-    <PropertyColumn Property="recipe => recipe.Points" />
+    <PropertyColumn Property="recipe => recipe.Points" Sortable="true"/>
     <TemplateColumn Title="Inputs" Context="recipe">
         @FormatRecipeItems(recipe.Inputs)
     </TemplateColumn>
     <TemplateColumn Title="Outputs" Context="recipe">
         @FormatRecipeItems(recipe.Outputs)
     </TemplateColumn>
+    <TemplateColumn Title="Estimated cost" Context="recipe" Sortable="true">
+        @EstimateProductionCost(recipe.Inputs, recipe.Outputs)
+    </TemplateColumn>"
     <TemplateColumn Context="recipe">
-        <a href="@($"recipes/edit?name={recipe.Name}")">Edit</a> |
-        <a href="@($"recipes/details?name={recipe.Name}")">Details</a> |
-        <a href="@($"recipes/delete?name={recipe.Name}")">Delete</a>
+        <a href="@($"recipes/details?name={recipe.Name}")">Details</a>
     </TemplateColumn>
 </QuickGrid>
-
+<Paginator State="pagination" />
 @code {
     private MercatorioSqliteDBContext context = default!;
     private QuickGrid<Recipe>? recipeGrid;
+    private string recipeFilter = string.Empty;
+    private PaginationState pagination = new PaginationState{ItemsPerPage = 20};
+
     protected override void OnInitialized()
     {
         context = DbFactory.CreateDbContext();
@@ -73,5 +79,41 @@
     private string FormatRecipeItems(List<RecipeItem> recipeItems)
     {
         return string.Join(", ", recipeItems.Select(item => String.Format("{0} {1}",item.Amount, item.Product)));
+    }
+
+    private IQueryable<Recipe> FilteredRecipes => context.Recipe.Where(recipe => recipe.Name!.Contains(recipeFilter));
+
+    /// <summary>
+    /// calculate the estimate cost of producing 1 output of this recipe using player's current inventory costs
+    /// </summary>
+    /// <param name="recipeInputItems">the list of inputs to the recipe</param>
+    /// <pam name="recipeOutputItems"> the list of outputs of the recipe</param>
+    /// <returns>the estimated per unit production cost of the recipe given the user's current inventory </returns>
+    private decimal EstimateProductionCost(List<RecipeItem> recipeInputItems, List<RecipeItem> recipeOutputItems)
+    {
+        decimal estimatedProductionCost = 0.0m;
+        BuildingAssetData inventoryItem;
+        foreach(var recipeItem in recipeInputItems)
+        {
+            if(storehouse.building.Storage.Inventory.Account.Assets.TryGetValue(recipeItem.Product, out inventoryItem))
+            {
+                estimatedProductionCost += inventoryItem.UnitCost * recipeItem.Amount;
+            }
+            else
+            {
+                estimatedProductionCost = 0;
+                break;
+            }
+        }
+        if(recipeOutputItems.Count == 1)
+        {
+            estimatedProductionCost /= recipeOutputItems.First().Amount;
+        }
+        else
+        {
+            estimatedProductionCost = 0;
+        }
+        return Math.Round(estimatedProductionCost,2);
+
     }
 }
