@@ -1,0 +1,9 @@
+.inventory-grid ::deep tbody tr:nth-child(even) > td {
+    background-color: azure;
+    border: 1px solid black;
+}
+
+.inventory-grid ::deep tbody tr:nth-child(odd) > td {
+    background-color: burlywood;
+    border: 1px solid black;
+}

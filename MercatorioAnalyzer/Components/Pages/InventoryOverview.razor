@@ -1,38 +1,49 @@
 ﻿@inject PlayerContainer playerContainer
 @inject Storehouse storehouse
 @page "/inventory-overview"
+@using System.Reflection.Metadata.Ecma335
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Newtonsoft.Json
 @rendermode InteractiveServer
 <h3>Inventory Overview</h3>
-<QuickGrid Class="table" Items="InventoryRows">
-    <PropertyColumn Property="@(row => row.Item)" Title="Item" Sortable="true" />
-    <PropertyColumn Property="@(row => row.Balance)" Title="Balance" Sortable="true" />
-    <PropertyColumn Property="@(row => row.UnitCost)" Title="Unit cost" Sortable="true" />
-    <PropertyColumn Property="@(row => row.Flow.Production)" Title="Production" Sortable="true" />
-    <PropertyColumn Property="@(row => row.Flow.ProductionCost)" Title="Production cost" Sortable="true" />
-    <PropertyColumn Property="@(row => row.Flow.Consumption)" Title="Consumption" Sortable="true" />
-    <PropertyColumn Property="@(row => row.Flow.ConsumptionCost)" Title="Consumption cost" Sortable="true" />
-    <PropertyColumn Property="@(row => row.Flow.Import)" Title="Import" Sortable="true" />
-    <PropertyColumn Property="@(row => row.Flow.ImportCost)" Title="Import cost" Sortable="true" />
-    <PropertyColumn Property="@(row => row.Flow.ImportFare)" Title="Import fare" Sortable="true" />
-    <PropertyColumn Property="@(row => row.Flow.Inbound)" Title="Inbound" Sortable="true" />
-    <PropertyColumn Property="@(row => row.Flow.InboundCost)" Title="Inbound cost" Sortable="true" />
-    <PropertyColumn Property="@(row => row.Flow.Outbound)" Title="Outbound" Sortable="true" />
-    <PropertyColumn Property="@(row => row.Flow.OutboundValue)" Title="Outbound value" Sortable="true" />
-    <PropertyColumn Property="@(row => row.Flow.OutboundCost)" Title="Outbound cost" Sortable="true" />
-    <PropertyColumn Property="@(row => row.Flow.Purchase)" Title="Purchase" Sortable="true" />
-    <PropertyColumn Property="@(row => row.Flow.PurchaseCost)" Title="Purchase cost" Sortable="true" />
-    <PropertyColumn Property="@(row => row.Flow.Sale)" Title="Sale" Sortable="true" />
-    <PropertyColumn Property="@(row => row.Flow.SaleValue)" Title="Sale value" Sortable="true" />
-    <PropertyColumn Property="@(row => row.Flow.SaleCost)" Title="Sale cost" Sortable="true" />
-    <PropertyColumn Property="@(row => row.Flow.Export)" Title="Export" Sortable="true" />
-    <PropertyColumn Property="@(row => row.Flow.ExportValue)" Title="Export value" Sortable="true" />
-    <PropertyColumn Property="@(row => row.Flow.ExportCost)" Title="Export cost" Sortable="true" />
-    <PropertyColumn Property="@(row => row.Flow.ExportFare)" Title="Export fare" Sortable="true" />
-    <PropertyColumn Property="@(row => row.Flow.Expiration)" Title="Expiration" Sortable="true" />
-</QuickGrid>
+<div>
+    <label>
+        <input type="checkbox" @bind="showAllItems"/>
+        Show all items
+    </label>
+</div>
+<div class="inventory-grid">
+    <QuickGrid Class="table" Items="InventoryRows">
+        <PropertyColumn Property="@(row => row.Item)" Title="Item" Sortable="true" />
+        <PropertyColumn Property="@(row => row.Balance)" Title="Balance" Sortable="true" />
+        <PropertyColumn Property="@(row => row.UnitCost)" Title="Unit cost" Sortable="true" />
+        <PropertyColumn Property="@(row => row.Flow.Production)" Title="Production" Sortable="true" />
+        <PropertyColumn Property="@(row => row.Flow.ProductionCost)" Title="Production cost" Sortable="true" />
+        <PropertyColumn Property="@(row => row.Flow.Consumption)" Title="Consumption" Sortable="true" />
+        <PropertyColumn Property="@(row => row.Flow.ConsumptionCost)" Title="Consumption cost" Sortable="true" />
+        <PropertyColumn Property="@(row => row.Flow.Import)" Title="Import" Sortable="true" />
+        <PropertyColumn Property="@(row => row.Flow.ImportCost)" Title="Import cost" Sortable="true" />
+        <PropertyColumn Property="@(row => row.Flow.ImportFare)" Title="Import fare" Sortable="true" />
+        <PropertyColumn Property="@(row => row.Flow.Inbound)" Title="Inbound" Sortable="true" />
+        <PropertyColumn Property="@(row => row.Flow.InboundCost)" Title="Inbound cost" Sortable="true" />
+        <PropertyColumn Property="@(row => row.Flow.Outbound)" Title="Outbound" Sortable="true" />
+        <PropertyColumn Property="@(row => row.Flow.OutboundValue)" Title="Outbound value" Sortable="true" />
+        <PropertyColumn Property="@(row => row.Flow.OutboundCost)" Title="Outbound cost" Sortable="true" />
+        <PropertyColumn Property="@(row => row.Flow.Purchase)" Title="Purchase" Sortable="true" />
+        <PropertyColumn Property="@(row => row.Flow.PurchaseCost)" Title="Purchase cost" Sortable="true" />
+        <PropertyColumn Property="@(row => row.Flow.Sale)" Title="Sale" Sortable="true" />
+        <PropertyColumn Property="@(row => row.Flow.SaleValue)" Title="Sale value" Sortable="true" />
+        <PropertyColumn Property="@(row => row.Flow.SaleCost)" Title="Sale cost" Sortable="true" />
+        <PropertyColumn Property="@(row => row.Flow.Export)" Title="Export" Sortable="true" />
+        <PropertyColumn Property="@(row => row.Flow.ExportValue)" Title="Export value" Sortable="true" />
+        <PropertyColumn Property="@(row => row.Flow.ExportCost)" Title="Export cost" Sortable="true" />
+        <PropertyColumn Property="@(row => row.Flow.ExportFare)" Title="Export fare" Sortable="true" />
+        <PropertyColumn Property="@(row => row.Flow.Expiration)" Title="Expiration" Sortable="true" />
+    </QuickGrid>
+</div>
 @code {
+    private bool showAllItems;
+
     private sealed record InventoryItemRow(
         string Item,
         decimal Balance,
@@ -50,8 +61,11 @@
 
             return assets.Select(asset =>
             {
-              var flow = flows.TryGetValue(asset.Key, out var value) ? value : new BuildingPreviousFlow();
-              return new InventoryItemRow(asset.Key, asset.Value.Balance, asset.Value.UnitCost, flow);  
+                var flow = flows.TryGetValue(asset.Key, out var value) ? value : new BuildingPreviousFlow();
+                return new InventoryItemRow(asset.Key, asset.Value.Balance, asset.Value.UnitCost, flow);  
+            }).Where(inventoryRow =>
+            {
+                return inventoryRow.Balance > 0 || showAllItems;
             }).AsQueryable();
         }
     }

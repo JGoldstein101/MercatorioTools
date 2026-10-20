@@ -18,22 +18,25 @@ Something something mercatorio line go up
 <div>
     <button @onclick="saveInfo">Save</button>
 </div>
-@if(dataSaved)
-{
-    <div>
-        <p role="status">Saved!</p>
-    </div>
-}
+<div>
+    <p role="status">@dataStatus</p>
+</div>
 @code {
-    private bool dataSaved = false;
+    private string dataStatus = "";
 
     private async Task saveInfo()
     {
-        dataSaved = false;
+        dataStatus = "Fetching";
+        try
+        {
+            playerContainer.playerData = await apiClient.GetPlayerDataAsync();
+            storehouse.building = await apiClient.GetStorehouse();
+            dataStatus = "Data fetched";
+        } catch (Exception ex)
+        {
+            dataStatus = ex.Message;
+        }
 
-        playerContainer.playerData = await apiClient.GetPlayerDataAsync();
-        storehouse.building = await apiClient.GetStorehouse();
-        dataSaved = true;
 
     }
 }

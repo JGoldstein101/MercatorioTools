@@ -3,6 +3,7 @@
 @using MercatorioAnalyzer.Data.Entity
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.EntityFrameworkCore
+@using Microsoft.EntityFrameworkCore.Query.Internal
 @using Newtonsoft.Json
 @implements IAsyncDisposable
 @inject IDbContextFactory<MercatorioAnalyzer.Data.Client.MercatorioSqliteDBContext> DbFactory
@@ -19,27 +20,36 @@
 <div>
     <input typer="search" @bind="recipeFilter" @bind:event="oninput">
 </div>
-<QuickGrid @ref="recipeGrid" Class="table" Items="FilteredRecipes" Pagination="pagination" >
-    <PropertyColumn Property="recipe => recipe.Name" />
-    <PropertyColumn Property="recipe => recipe.Tier" Sortable="true"/>
-    <PropertyColumn Property="recipe => recipe.Site" />
-    <PropertyColumn Property="recipe => recipe.Class" />
-    <PropertyColumn Property="recipe => recipe.Points" Sortable="true"/>
-    <TemplateColumn Title="Inputs" Context="recipe">
-        @FormatRecipeItems(recipe.Inputs)
-    </TemplateColumn>
-    <TemplateColumn Title="Outputs" Context="recipe">
-        @FormatRecipeItems(recipe.Outputs)
-    </TemplateColumn>
-    <TemplateColumn Title="Estimated cost" Context="recipe" Sortable="true">
-        @EstimateProductionCost(recipe.Inputs, recipe.Outputs)
-    </TemplateColumn>"
-    <TemplateColumn Context="recipe">
-        <a href="@($"recipes/details?name={recipe.Name}")">Details</a>
-    </TemplateColumn>
-</QuickGrid>
+<div>
+    <label>
+        <input type="checkbox" @bind="showEstimatedCost" />
+        Show estimated production cost
+    </label>
+</div>
+<div class="recipe-grid">
+    <QuickGrid @ref="recipeGrid" Class="table" Items="FilteredRecipes" Pagination="pagination" >
+        <PropertyColumn Property="recipe => recipe.Name" />
+        <PropertyColumn Property="recipe => recipe.Tier" Sortable="true"/>
+        <PropertyColumn Property="recipe => recipe.Site" />
+        <PropertyColumn Property="recipe => recipe.Class" />
+        <PropertyColumn Property="recipe => recipe.Points" Sortable="true"/>
+        <TemplateColumn Title="Inputs" Context="recipe">
+            @FormatRecipeItems(recipe.Inputs)
+        </TemplateColumn>
+        <TemplateColumn Title="Outputs" Context="recipe">
+            @FormatRecipeItems(recipe.Outputs)
+        </TemplateColumn>
+        <TemplateColumn Title="Estimated cost" Context="recipe" Sortable="true">
+            @EstimateProductionCost(recipe.Inputs, recipe.Outputs)
+        </TemplateColumn>
+        <TemplateColumn Context="recipe">
+            <a href="@($"recipes/details?name={recipe.Name}")">Details</a>
+        </TemplateColumn>
+    </QuickGrid>
+</div>
 <Paginator State="pagination" />
 @code {
+    private bool showEstimatedCost = false;
     private MercatorioSqliteDBContext context = default!;
     private QuickGrid<Recipe>? recipeGrid;
     private string recipeFilter = string.Empty;
@@ -92,7 +102,12 @@
     private decimal EstimateProductionCost(List<RecipeItem> recipeInputItems, List<RecipeItem> recipeOutputItems)
     {
         decimal estimatedProductionCost = 0.0m;
+        if(showEstimatedCost == false)
+        {
+            return estimatedProductionCost;
+        }
         BuildingAssetData inventoryItem;
+        BuildingPreviousFlow previousFlow;
         foreach(var recipeItem in recipeInputItems)
         {
             if(storehouse.building.Storage.Inventory.Account.Assets.TryGetValue(recipeItem.Product, out inventoryItem))
@@ -103,6 +118,13 @@
             {
                 estimatedProductionCost = 0;
                 break;
+            }
+            if(storehouse.building.Storage.Inventory.PreviousFlows.TryGetValue(recipeItem.Product, out previousFlow))
+            {
+                if(previousFlow.Production > 0)
+                {
+                    estimatedProductionCost += (previousFlow.ProductionCost / previousFlow.Production) * recipeItem.Amount;
+                }
             }
         }
         if(recipeOutputItems.Count == 1)
