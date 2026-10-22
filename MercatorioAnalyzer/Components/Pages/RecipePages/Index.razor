@@ -39,7 +39,7 @@
         <TemplateColumn Title="Outputs" Context="recipe">
             @FormatRecipeItems(recipe.Outputs)
         </TemplateColumn>
-        <TemplateColumn Title="Estimated cost" Context="recipe" Sortable="true">
+        <TemplateColumn Title="Estimated cost" Context="recipe" SortBy="@estimatedCostSort">
             @EstimateProductionCost(recipe.Inputs, recipe.Outputs)
         </TemplateColumn>
         <TemplateColumn Context="recipe">
@@ -54,10 +54,14 @@
     private QuickGrid<Recipe>? recipeGrid;
     private string recipeFilter = string.Empty;
     private PaginationState pagination = new PaginationState{ItemsPerPage = 20};
+    private GridSort<Recipe> estimatedCostSort;
+    private List<Recipe> cachedRecipeList = [];
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         context = DbFactory.CreateDbContext();
+        cachedRecipeList = await context.Recipe.AsNoTracking().ToListAsync();
+        estimatedCostSort = GridSort<Recipe>.ByAscending(recipe => EstimateProductionCost(recipe.Inputs, recipe.Outputs));
     }
 
     public async ValueTask DisposeAsync() => await context.DisposeAsync();
@@ -91,7 +95,8 @@
         return string.Join(", ", recipeItems.Select(item => String.Format("{0} {1}",item.Amount, item.Product)));
     }
 
-    private IQueryable<Recipe> FilteredRecipes => context.Recipe.Where(recipe => recipe.Name!.Contains(recipeFilter));
+    private IQueryable<Recipe> FilteredRecipes => cachedRecipeList.Where(recipe => recipe.Name!.Contains(recipeFilter)).AsQueryable();
+
 
     /// <summary>
     /// calculate the estimate cost of producing 1 output of this recipe using player's current inventory costs
@@ -112,19 +117,20 @@
         {
             if(storehouse.building.Storage.Inventory.Account.Assets.TryGetValue(recipeItem.Product, out inventoryItem))
             {
-                estimatedProductionCost += inventoryItem.UnitCost * recipeItem.Amount;
+                if(inventoryItem.Balance > 0)
+                {
+                    estimatedProductionCost += inventoryItem.UnitCost * recipeItem.Amount;
+                }
+                else
+                {
+                    estimatedProductionCost = 0;
+                    break;
+                }
             }
             else
             {
                 estimatedProductionCost = 0;
                 break;
-            }
-            if(storehouse.building.Storage.Inventory.PreviousFlows.TryGetValue(recipeItem.Product, out previousFlow))
-            {
-                if(previousFlow.Production > 0)
-                {
-                    estimatedProductionCost += (previousFlow.ProductionCost / previousFlow.Production) * recipeItem.Amount;
-                }
             }
         }
         if(recipeOutputItems.Count == 1)
