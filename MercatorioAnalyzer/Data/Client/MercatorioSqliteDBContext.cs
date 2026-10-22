@@ -3,12 +3,20 @@ namespace MercatorioAnalyzer.Data.Client;
 using MercatorioAnalyzer.Data.Entity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System.Text.Json;
 public class MercatorioSqliteDBContext(DbContextOptions<MercatorioSqliteDBContext> options) : DbContext(options)
 {
+    public DbSet<MercatorioAnalyzer.Data.Entity.Product> Product { get; set; } = default!;
     public DbSet<MercatorioAnalyzer.Data.Entity.Recipe> Recipe { get; set; } = default!;
     protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        ConfigureRecipes(modelBuilder);
+        ConfigureProducts(modelBuilder);
+    }
+
+    private static void ConfigureRecipes(ModelBuilder modelBuilder)
     {
         var converter = new ValueConverter<List<RecipeItem>, string>(
             items => JsonSerializer.Serialize(items,(JsonSerializerOptions?)null),
@@ -27,5 +35,10 @@ public class MercatorioSqliteDBContext(DbContextOptions<MercatorioSqliteDBContex
         recipe.Property(r => r.Inputs).HasConversion(converter).Metadata.SetValueComparer(comparer);
         recipe.Property(r => r.Outputs).HasConversion(converter).Metadata.SetValueComparer(comparer);
 
+    }
+
+    private static void ConfigureProducts(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Product>().OwnsOne(product => product.Price);
     }
 }

@@ -16,6 +16,28 @@ namespace MercatorioAnalyzer.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.13");
 
+            modelBuilder.Entity("MercatorioAnalyzer.Data.Entity.Product", b =>
+                {
+                    b.Property<string>("Name")
+                        .HasColumnType("TEXT");
+
+                    b.PrimitiveCollection<string>("Classes")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Name");
+
+                    b.ToTable("Product");
+                });
+
             modelBuilder.Entity("MercatorioAnalyzer.Data.Entity.Recipe", b =>
                 {
                     b.Property<string>("Name")
@@ -46,6 +68,34 @@ namespace MercatorioAnalyzer.Migrations
                     b.HasKey("Name");
 
                     b.ToTable("Recipe");
+                });
+
+            modelBuilder.Entity("MercatorioAnalyzer.Data.Entity.Product", b =>
+                {
+                    b.OwnsOne("MercatorioAnalyzer.Data.Entity.ProductPrice", "Price", b1 =>
+                        {
+                            b1.Property<string>("ProductName")
+                                .HasColumnType("TEXT");
+
+                            b1.Property<decimal>("High")
+                                .HasColumnType("TEXT");
+
+                            b1.Property<decimal>("Low")
+                                .HasColumnType("TEXT");
+
+                            b1.Property<decimal>("Typical")
+                                .HasColumnType("TEXT");
+
+                            b1.HasKey("ProductName");
+
+                            b1.ToTable("Product");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ProductName");
+                        });
+
+                    b.Navigation("Price")
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

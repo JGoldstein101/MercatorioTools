@@ -20,12 +20,6 @@
 <div>
     <input typer="search" @bind="recipeFilter" @bind:event="oninput">
 </div>
-<div>
-    <label>
-        <input type="checkbox" @bind="showEstimatedCost" />
-        Show estimated production cost
-    </label>
-</div>
 <div class="recipe-grid">
     <QuickGrid @ref="recipeGrid" Class="table" Items="FilteredRecipes" Pagination="pagination" >
         <PropertyColumn Property="recipe => recipe.Name" />
@@ -49,7 +43,6 @@
 </div>
 <Paginator State="pagination" />
 @code {
-    private bool showEstimatedCost = false;
     private MercatorioSqliteDBContext context = default!;
     private QuickGrid<Recipe>? recipeGrid;
     private string recipeFilter = string.Empty;
@@ -107,10 +100,6 @@
     private decimal EstimateProductionCost(List<RecipeItem> recipeInputItems, List<RecipeItem> recipeOutputItems)
     {
         decimal estimatedProductionCost = 0.0m;
-        if(showEstimatedCost == false)
-        {
-            return estimatedProductionCost;
-        }
         BuildingAssetData inventoryItem;
         BuildingPreviousFlow previousFlow;
         foreach(var recipeItem in recipeInputItems)

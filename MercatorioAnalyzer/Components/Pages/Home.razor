@@ -30,7 +30,7 @@ Something something mercatorio line go up
         try
         {
             playerContainer.playerData = await apiClient.GetPlayerDataAsync();
-            storehouse.building = await apiClient.GetStorehouse();
+            storehouse.building = await apiClient.GetStorehouseAsync();
             dataStatus = "Data fetched";
         } catch (Exception ex)
         {

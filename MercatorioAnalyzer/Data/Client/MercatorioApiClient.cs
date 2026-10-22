@@ -66,8 +66,20 @@ public class MercatorioApiClient(
         return buildingObject;
     }
 
-    public async Task<Building> GetStorehouse()
+    public async Task<Building> GetStorehouseAsync()
     {
-        return await GetBuildingAsync(playerContainer.playerData.household.sustenance.providerId);
+        var providerId = playerContainer.playerData?.household?.sustenance?.providerId;
+        if(string.IsNullOrEmpty(providerId))
+        {
+            throw new InvalidDataException("Player data is not loaded or does not have a valid storehouse");
+        } 
+        return await GetBuildingAsync(providerId);
+    }
+
+    public async Task<List<Product>> GetProductAsync()
+    {
+        var body = await makeRequest("config/products");
+        List<Product> productList = JsonConvert.DeserializeObject<List<Product>>(body) ?? throw new JsonException("The product response was empty");
+        return productList;
     }
 }
