@@ -1,4 +1,5 @@
 @page "/products/details"
+@using MercatorioAnalyzer.Components.Components
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using MercatorioAnalyzer.Data.Client
 @using MercatorioAnalyzer.Data.Entity
@@ -24,22 +25,7 @@
             <dt class="col-sm-2">Classes</dt>
             <dd class="col-sm-10">@product.Classes[0]</dd>
         </dl>
-
-        <div class="recipe-grid">
-            <QuickGrid @ref="recipeGrid" Class="table" Items="ProductRecipes">
-                <PropertyColumn Property="recipe => recipe.Name" />
-                <PropertyColumn Property="recipe => recipe.Tier" Sortable="true"/>
-                <PropertyColumn Property="recipe => recipe.Site" />
-                <PropertyColumn Property="recipe => recipe.Class" />
-                <PropertyColumn Property="recipe => recipe.Points" Sortable="true"/>
-                <TemplateColumn Title="Inputs" Context="recipe">
-                    @FormatRecipeItems(recipe.Inputs)
-                </TemplateColumn>
-                <TemplateColumn Title="Outputs" Context="recipe">
-                    @FormatRecipeItems(recipe.Outputs)
-                </TemplateColumn>
-            </QuickGrid>
-        </div>
+        <RecipeGrid Recipes="ProductRecipes" />
         <div>
             <a href="@($"/products")">Back to List</a>
         </div>
@@ -49,8 +35,6 @@
 @code {
     private Product? product;
     private List<Recipe> productRecipes = new List<Recipe>();
-
-    private QuickGrid<Recipe>? recipeGrid;
     [SupplyParameterFromQuery]
     private string Name { get; set; }
 
@@ -71,52 +55,5 @@
         var recipes = await context.Recipe.AsNoTracking().ToListAsync();
         return recipes.Where(recipe => recipe.Outputs.Any(output => output.Product == productName)).ToList();
     }
-    private string FormatRecipeItems(List<RecipeItem> recipeItems)
-    {
-        return string.Join(", ", recipeItems.Select(item => String.Format("{0} {1}",item.Amount, item.Product)));
-    }
     private IQueryable<Recipe> ProductRecipes => productRecipes.AsQueryable();
-
-    /// <summary>
-    /// calculate the estimate cost of producing 1 output of this recipe using player's current inventory costs
-    /// </summary>
-    /// <param name="recipeInputItems">the list of inputs to the recipe</param>
-    /// <pam name="recipeOutputItems"> the list of outputs of the recipe</param>
-    /// <returns>the estimated per unit production cost of the recipe given the user's current inventory </returns>
-    private decimal EstimateProductionCost(List<RecipeItem> recipeInputItems, List<RecipeItem> recipeOutputItems)
-    {
-        decimal estimatedProductionCost = 0.0m;
-        BuildingAssetData inventoryItem;
-        BuildingPreviousFlow previousFlow;
-        foreach(var recipeItem in recipeInputItems)
-        {
-            if(storehouse.building.Storage.Inventory.Account.Assets.TryGetValue(recipeItem.Product, out inventoryItem))
-            {
-                if(inventoryItem.Balance > 0)
-                {
-                    estimatedProductionCost += inventoryItem.UnitCost * recipeItem.Amount;
-                }
-                else
-                {
-                    estimatedProductionCost = 0;
-                    break;
-                }
-            }
-            else
-            {
-                estimatedProductionCost = 0;
-                break;
-            }
-        }
-        if(recipeOutputItems.Count == 1)
-        {
-            estimatedProductionCost /= recipeOutputItems.First().Amount;
-        }
-        else
-        {
-            estimatedProductionCost = 0;
-        }
-        return Math.Round(estimatedProductionCost,2);
-
-    }
 }

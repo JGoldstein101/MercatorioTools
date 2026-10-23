@@ -1,4 +1,5 @@
 @page "/recipes"
+@using MercatorioAnalyzer.Components.Components
 @using MercatorioAnalyzer.Data.Client
 @using MercatorioAnalyzer.Data.Entity
 @using Microsoft.AspNetCore.Components.QuickGrid
@@ -21,40 +22,14 @@
     <input typer="search" @bind="recipeFilter" @bind:event="oninput">
 </div>
 <div class="recipe-grid">
-    <QuickGrid @ref="recipeGrid" Class="table" Items="FilteredRecipes" Pagination="pagination" >
-        <PropertyColumn Property="recipe => recipe.Name" />
-        <PropertyColumn Property="recipe => recipe.Tier" Sortable="true"/>
-        <PropertyColumn Property="recipe => recipe.Site" />
-        <PropertyColumn Property="recipe => recipe.Class" />
-        <PropertyColumn Property="recipe => recipe.Points" Sortable="true"/>
-        <TemplateColumn Title="Inputs" Context="recipe">
-            @FormatRecipeItems(recipe.Inputs)
-        </TemplateColumn>
-        <TemplateColumn Title="Outputs" Context="recipe">
-            @FormatRecipeItems(recipe.Outputs)
-        </TemplateColumn>
-        <TemplateColumn Title="Estimated cost" Context="recipe" SortBy="@estimatedCostSort">
-            @EstimateProductionCost(recipe.Inputs, recipe.Outputs)
-        </TemplateColumn>
-        <TemplateColumn Context="recipe">
-            <a href="@($"recipes/details?name={recipe.Name}")">Details</a>
-        </TemplateColumn>
-    </QuickGrid>
+    <RecipeGrid Recipes="FilteredRecipes" />
 </div>
-<Paginator State="pagination" />
 @code {
     private MercatorioSqliteDBContext context = default!;
-    private QuickGrid<Recipe>? recipeGrid;
     private string recipeFilter = string.Empty;
-    private PaginationState pagination = new PaginationState{ItemsPerPage = 20};
-    private GridSort<Recipe> estimatedCostSort;
-    private List<Recipe> cachedRecipeList = [];
-
     protected override async Task OnInitializedAsync()
     {
         context = DbFactory.CreateDbContext();
-        cachedRecipeList = await context.Recipe.AsNoTracking().ToListAsync();
-        estimatedCostSort = GridSort<Recipe>.ByAscending(recipe => EstimateProductionCost(recipe.Inputs, recipe.Outputs));
     }
 
     public async ValueTask DisposeAsync() => await context.DisposeAsync();
@@ -77,60 +52,11 @@
         await db.SaveChangesAsync();
         await transaction.CommitAsync();
         context.ChangeTracker.Clear();
-        if(recipeGrid is not null)
+        /*if(recipeGrid is not null)
         {
             await recipeGrid.RefreshDataAsync();
-        }
+        }*/
     }
 
-    private string FormatRecipeItems(List<RecipeItem> recipeItems)
-    {
-        return string.Join(", ", recipeItems.Select(item => String.Format("{0} {1}",item.Amount, item.Product)));
-    }
-
-    private IQueryable<Recipe> FilteredRecipes => cachedRecipeList.Where(recipe => recipe.Name!.Contains(recipeFilter)).AsQueryable();
-
-
-    /// <summary>
-    /// calculate the estimate cost of producing 1 output of this recipe using player's current inventory costs
-    /// </summary>
-    /// <param name="recipeInputItems">the list of inputs to the recipe</param>
-    /// <pam name="recipeOutputItems"> the list of outputs of the recipe</param>
-    /// <returns>the estimated per unit production cost of the recipe given the user's current inventory </returns>
-    private decimal EstimateProductionCost(List<RecipeItem> recipeInputItems, List<RecipeItem> recipeOutputItems)
-    {
-        decimal estimatedProductionCost = 0.0m;
-        BuildingAssetData inventoryItem;
-        BuildingPreviousFlow previousFlow;
-        foreach(var recipeItem in recipeInputItems)
-        {
-            if(storehouse.building.Storage.Inventory.Account.Assets.TryGetValue(recipeItem.Product, out inventoryItem))
-            {
-                if(inventoryItem.Balance > 0)
-                {
-                    estimatedProductionCost += inventoryItem.UnitCost * recipeItem.Amount;
-                }
-                else
-                {
-                    estimatedProductionCost = 0;
-                    break;
-                }
-            }
-            else
-            {
-                estimatedProductionCost = 0;
-                break;
-            }
-        }
-        if(recipeOutputItems.Count == 1)
-        {
-            estimatedProductionCost /= recipeOutputItems.First().Amount;
-        }
-        else
-        {
-            estimatedProductionCost = 0;
-        }
-        return Math.Round(estimatedProductionCost,2);
-
-    }
+    private IQueryable<Recipe> FilteredRecipes => context.Recipe.Where(recipe => recipe.Name!.Contains(recipeFilter));
 }
