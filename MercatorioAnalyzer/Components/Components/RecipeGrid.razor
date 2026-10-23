@@ -1,6 +1,6 @@
 ﻿@using Microsoft.AspNetCore.Components.QuickGrid
 @inject Storehouse storehouse
-
+<div class="recipe-grid">
 <QuickGrid TGridItem="Recipe" Items = "Recipes" Pagination="pagination">
     <PropertyColumn Property="recipe => recipe.Name" />
     <PropertyColumn Property="recipe => recipe.Tier" Sortable="true"/>
@@ -21,6 +21,8 @@
     </TemplateColumn>
 </QuickGrid>
 <Paginator State="pagination" />
+</div>
+
 @code {
     [Parameter, EditorRequired]
     public IQueryable<Recipe> Recipes { get; set; } = default;
