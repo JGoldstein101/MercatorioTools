@@ -5,36 +5,63 @@
 @using MercatorioAnalyzer.Data.Client
 @implements IAsyncDisposable
 @inject IDbContextFactory<MercatorioAnalyzer.Data.Client.MercatorioSqliteDBContext> DbFactory
+@inject MercatorioApiClient mercatorioApiClient
 @inject NavigationManager NavigationManager
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Products</PageTitle>
 
-<h1>Index</h1>
-
-<p>
-    <a href="products/create">Create New</a>
-</p>
-
-<QuickGrid Class="table" Items="context.Product">
-    <PropertyColumn Property="product => product.Type" />
-    <PropertyColumn Property="product => product.Unit" />
-    <PropertyColumn Property="product => product.Classes" />
-    <PropertyColumn Property="product => product.Price" />
-
-    <TemplateColumn Context="product">
-        <a href="@($"products/edit?name={product.Name}")">Edit</a> |
-        <a href="@($"products/details?name={product.Name}")">Details</a> |
-        <a href="@($"products/delete?name={product.Name}")">Delete</a>
-    </TemplateColumn>
-</QuickGrid>
-
+<h1>Products</h1>
+<div>
+    <button @onclick="SyncProducts">Sync now</button>
+</div>
+<div>
+    <input typer="search" @bind="productFilter" @bind:event="oninput">
+</div>
+<div>
+    <QuickGrid @ref="productGrid" Class="table" Items="FilteredProducts" Pagination="pagination">
+        <PropertyColumn Property="product => product.Name" />
+        <PropertyColumn Property="product => product.Type" />
+        <PropertyColumn Property="product => product.Unit" />
+        <TemplateColumn Title="Class" Context="product">
+            @FormatClass(product.Classes)
+        </TemplateColumn>
+        <TemplateColumn Context="product">
+            <a href="@($"products/details?name={product.Name}")">Details</a>
+        </TemplateColumn>
+    </QuickGrid>
+</div>
+<Paginator State="pagination" />
 @code {
     private MercatorioSqliteDBContext context = default!;
-
+    private QuickGrid<Product>? productGrid;
+    private string productFilter = string.Empty;
+    private PaginationState pagination = new PaginationState{ItemsPerPage = 20};
     protected override void OnInitialized()
     {
         context = DbFactory.CreateDbContext();
     }
 
     public async ValueTask DisposeAsync() => await context.DisposeAsync();
+
+    public async Task SyncProducts()
+    {
+        var products = await mercatorioApiClient.GetProductAsync();
+        await using var db = await DbFactory.CreateDbContextAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync();
+        await db.Product.ExecuteDeleteAsync();
+        db.Product.AddRange(products);
+        await db.SaveChangesAsync();
+        await transaction.CommitAsync();
+        context.ChangeTracker.Clear();
+        if(productGrid is not null)
+        {
+            await productGrid.RefreshDataAsync();
+        }
+    }
+
+    private IQueryable<Product> FilteredProducts => context.Product.Where(product => product.Name!.Contains(productFilter));
+    private string FormatClass(List<string> classes)
+    {
+        return classes[0];
+    }
 }
