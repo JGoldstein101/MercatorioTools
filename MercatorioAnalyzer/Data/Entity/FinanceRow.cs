@@ -1,6 +1,6 @@
 namespace MercatorioAnalyzer.Data.Entity;
 
-public sealed record FinanceRow(string Item, decimal Cost, decimal Revenue, decimal Cogs)
+public sealed record FinanceRow(string Item, decimal Expenditure, decimal Revenue, decimal Cogs)
 {
     public decimal Profit => Revenue - Cogs;
 

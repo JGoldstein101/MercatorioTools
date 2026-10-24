@@ -35,7 +35,7 @@ else
         <div class="finances-grid">
             <QuickGrid Class="table" Items="rows.AsQueryable()">
                 <PropertyColumn Property="@(row => row.Item)" Title="Item" Sortable="true" InitialSortDirection="SortDirection.Ascending" IsDefaultSortColumn="true" />
-                <PropertyColumn Property="@(row => row.Cost)" Title="Cost" Format="N2" Sortable="true" />
+                <PropertyColumn Property="@(row => row.Expenditure)" Title="Expenditure" Format="N2" Sortable="true" />
                 <PropertyColumn Property="@(row => row.Revenue)" Title="Revenue" Format="N2" Sortable="true" />
                 <PropertyColumn Property="@(row => row.Cogs)" Title="COGS" Format="N2" Sortable="true" />
                 <PropertyColumn Property="@(row => row.Profit)" Title="Profit" Format="N2" Sortable="true" />
