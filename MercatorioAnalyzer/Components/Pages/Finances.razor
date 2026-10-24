@@ -1,0 +1,84 @@
+﻿@inject PlayerContainer playerContainer
+@inject Storehouse storehouse
+@inject MercatorioApiClient apiClient
+@page "/finances"
+@using MercatorioAnalyzer.Data.Client
+@using Microsoft.AspNetCore.Components.QuickGrid
+@rendermode InteractiveServer
+
+<PageTitle>Finances</PageTitle>
+
+<h3>Finances</h3>
+@if (playerContainer.playerData is null || storehouse.building.Storage?.Inventory is null)
+{
+    <p>No player data loaded. Enter your credentials on the <a href="">Home</a> page to fetch it.</p>
+}
+else
+{
+    <div>
+        <button class="btn btn-primary" @onclick="RefreshAsync" disabled="@isLoading">Refresh</button>
+    </div>
+    @if (isLoading)
+    {
+        <p>Loading…</p>
+    }
+    else if (errorMessage is not null)
+    {
+        <p role="alert">@errorMessage</p>
+    }
+    else if (rows.Count == 0)
+    {
+        <p>No purchases, sales, imports, or exports this turn.</p>
+    }
+    else
+    {
+        <div class="finances-grid">
+            <QuickGrid Class="table" Items="rows.AsQueryable()">
+                <PropertyColumn Property="@(row => row.Item)" Title="Item" Sortable="true" InitialSortDirection="SortDirection.Ascending" IsDefaultSortColumn="true" />
+                <PropertyColumn Property="@(row => row.Cost)" Title="Cost" Format="N2" Sortable="true" />
+                <PropertyColumn Property="@(row => row.Revenue)" Title="Revenue" Format="N2" Sortable="true" />
+                <PropertyColumn Property="@(row => row.Cogs)" Title="COGS" Format="N2" Sortable="true" />
+                <PropertyColumn Property="@(row => row.Profit)" Title="Profit" Format="N2" Sortable="true" />
+            </QuickGrid>
+        </div>
+    }
+}
+
+@code {
+    private List<FinanceRow> rows = [];
+    private bool isLoading;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (playerContainer.playerData is not null && storehouse.building.Storage?.Inventory is not null)
+        {
+            await LoadAsync(refreshStorehouse: false);
+        }
+    }
+
+    private Task RefreshAsync() => LoadAsync(refreshStorehouse: true);
+
+    private async Task LoadAsync(bool refreshStorehouse)
+    {
+        isLoading = true;
+        errorMessage = null;
+        try
+        {
+            if (refreshStorehouse)
+            {
+                storehouse.building = await apiClient.GetStorehouseAsync();
+            }
+            var transports = await apiClient.GetPlayerTransportsAsync();
+            rows = FinanceRow.Build(storehouse.building, transports);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

@@ -76,6 +76,30 @@ public class MercatorioApiClient(
         return await GetBuildingAsync(providerId);
     }
 
+    public async Task<Business> GetBusinessAsync(string businessId)
+    {
+        var body = await makeRequest("businesses/" + businessId);
+        return JsonConvert.DeserializeObject<Business>(body) ?? throw new InvalidDataException("Business response was invalid");
+    }
+
+    public async Task<Transport> GetTransportAsync(string transportId)
+    {
+        var body = await makeRequest("transports/" + transportId);
+        return JsonConvert.DeserializeObject<Transport>(body) ?? throw new InvalidDataException("Transport response was invalid");
+    }
+
+    public async Task<List<Transport>> GetPlayerTransportsAsync()
+    {
+        var businessId = playerContainer.playerData?.household?.businessIds.FirstOrDefault();
+        if (string.IsNullOrEmpty(businessId))
+        {
+            throw new InvalidDataException("Player data is not loaded or does not have a business");
+        }
+        var business = await GetBusinessAsync(businessId);
+        var transports = await Task.WhenAll(business.TransportIds.Select(GetTransportAsync));
+        return transports.ToList();
+    }
+
     public async Task<List<Product>> GetProductAsync()
     {
         var body = await makeRequest("config/products");
