@@ -4,10 +4,6 @@ public sealed record FinanceRow(string Item, decimal Cost, decimal Revenue, deci
 {
     public decimal Profit => Revenue - Cogs;
 
-    // Current-turn trades come from account assets: the storehouse account for domestic trades and
-    // each transport's route account for exports/imports. COGS is estimated from unit_cost. Transport fares come
-    // from realized route flows (import fare -> Cost, export fare -> COGS); flow import/export costs are not added
-    // because the route account already covers them.
     public static List<FinanceRow> Build(Building? storehouse, IEnumerable<Transport> transports)
     {
         var totals = new Dictionary<string, (decimal Cost, decimal Revenue, decimal Cogs)>();
