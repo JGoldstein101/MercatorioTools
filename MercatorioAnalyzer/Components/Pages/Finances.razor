@@ -39,6 +39,9 @@ else
                 <PropertyColumn Property="@(row => row.Revenue)" Title="Revenue" Format="N2" Sortable="true" />
                 <PropertyColumn Property="@(row => row.Cogs)" Title="COGS" Format="N2" Sortable="true" />
                 <PropertyColumn Property="@(row => row.Profit)" Title="Profit" Format="N2" Sortable="true" />
+                <TemplateColumn Context="row">
+                    <a href="@($"products/details?name={row.Item}")">Details</a>
+                </TemplateColumn>
             </QuickGrid>
         </div>
     }
