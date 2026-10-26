@@ -66,14 +66,34 @@ public class MercatorioApiClient(
         return buildingObject;
     }
 
+    public async Task<BuildingOperations> GetBuildingOperationsAsync(string buildingId)
+    {
+        var body = await makeRequest("buildings/" + buildingId + "/operations");
+        return JsonConvert.DeserializeObject<BuildingOperations>(body) ?? throw new InvalidDataException("Building operations response was invalid");
+    }
+
+    public async Task<(Building Building, BuildingOperations Operations)> GetStorehouseDataAsync()
+    {
+        var storehouseId = GetStorehouseId();
+        var buildingTask = GetBuildingAsync(storehouseId);
+        var operationsTask = GetBuildingOperationsAsync(storehouseId);
+        await Task.WhenAll(buildingTask, operationsTask);
+        return (await buildingTask, await operationsTask);
+    }
+
     public async Task<Building> GetStorehouseAsync()
     {
+        return await GetBuildingAsync(GetStorehouseId());
+    }
+
+    private string GetStorehouseId()
+    {
         var providerId = playerContainer.playerData?.household?.sustenance?.providerId;
-        if(string.IsNullOrEmpty(providerId))
+        if (string.IsNullOrEmpty(providerId))
         {
             throw new InvalidDataException("Player data is not loaded or does not have a valid storehouse");
-        } 
-        return await GetBuildingAsync(providerId);
+        }
+        return providerId;
     }
 
     public async Task<Business> GetBusinessAsync(string businessId)

@@ -30,7 +30,9 @@ Something something mercatorio line go up
         try
         {
             playerContainer.playerData = await mercatorioApiClient.GetPlayerDataAsync();
-            storehouse.building = await mercatorioApiClient.GetStorehouseAsync();
+            var storehouseData = await mercatorioApiClient.GetStorehouseDataAsync();
+            storehouse.building = storehouseData.Building;
+            storehouse.Operations = storehouseData.Operations;
             dataStatus = "Data fetched";
         } catch (Exception ex)
         {

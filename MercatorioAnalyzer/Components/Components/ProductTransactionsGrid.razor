@@ -61,18 +61,20 @@ else
                 return;
             }
 
-            var storehouseTask = mercatorioApiClient.GetStorehouseAsync();
+            var storehouseTask = mercatorioApiClient.GetStorehouseDataAsync();
             var transportsTask = mercatorioApiClient.GetPlayerTransportsAsync();
 
-            storehouse.building = await storehouseTask;
+            var storehouseData = await storehouseTask;
             var transports = await transportsTask;
+            storehouse.building = storehouseData.Building;
+            storehouse.Operations = storehouseData.Operations;
             Dictionary<string, string> transportNames = new Dictionary<string, string>();
             foreach(var transport in transports)
             {
                 var transportName = await mercatorioApiClient.GetTownAsync(transport.Route.RemoteTown);
                 transportNames.Add(transport.Route.RemoteTown, transportName.Name);
             }
-            rows = ProductTransactionRow.Build(ProductName, storehouse.building, transports, transportNames);
+            rows = ProductTransactionRow.Build(ProductName, storehouse.Operations, transports, transportNames);
         }
         catch (Exception ex)
         {

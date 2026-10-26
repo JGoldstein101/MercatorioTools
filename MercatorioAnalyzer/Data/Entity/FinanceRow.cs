@@ -4,7 +4,7 @@ public sealed record FinanceRow(string Item, decimal Expenditure, decimal Revenu
 {
     public decimal Profit => Revenue - Cogs;
 
-    public static List<FinanceRow> Build(Building? storehouse, IEnumerable<Transport> transports)
+    public static List<FinanceRow> Build(BuildingOperations? storehouseOperations, IEnumerable<Transport> transports)
     {
         var totals = new Dictionary<string, (decimal Cost, decimal Revenue, decimal Cogs)>();
 
@@ -14,13 +14,18 @@ public sealed record FinanceRow(string Item, decimal Expenditure, decimal Revenu
             totals[item] = (current.Cost + cost, current.Revenue + revenue, current.Cogs + cogs);
         }
 
-        var assets = storehouse?.Storage?.Inventory?.Account?.Assets ?? [];
-        foreach (var (item, asset) in assets)
+        foreach (var (item, flow) in storehouseOperations?.TotalFlows ?? [])
         {
+            var realized = flow?.Realized;
+            if (realized is null)
+            {
+                continue;
+            }
+
             Add(item,
-                asset.Purchase * asset.PurchasePrice,
-                asset.Sale * asset.SalePrice,
-                asset.Sale * asset.UnitCost);
+                (realized.PurchaseCost ?? 0m),
+                (realized.SaleValue ?? 0m),
+                (realized.SaleCost ?? 0m));
         }
 
         foreach (var transport in transports)

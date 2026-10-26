@@ -15,24 +15,22 @@ public sealed record ProductTransactionRow(
 
     public static List<ProductTransactionRow> Build(
         string productName,
-        Building? storehouse,
+        BuildingOperations? storehouseOperations,
         IEnumerable<Transport> transports,
         Dictionary<string, string> transportNames)
     {
         var rows = new List<ProductTransactionRow>();
-        var inventory = storehouse?.Storage?.Inventory;
-        var storehouseAsset = GetValue(inventory?.Account?.Assets, productName);
-        var storehouseFlow = GetValue(inventory?.PreviousFlows, productName);
+        var storehouseFlow = GetValue(storehouseOperations?.TotalFlows, productName)?.Realized;
 
         rows.Add(Create(
             "Storehouse",
-            storehouseAsset?.Purchase ?? 0m,
-            storehouseAsset?.PurchasePrice ?? 0m,
-            storehouseAsset?.Sale ?? 0m,
-            storehouseAsset?.SalePrice ?? 0m,
-            storehouseAsset?.UnitCost ?? 0m,
-            storehouseFlow?.ImportFare ?? 0m,
-            storehouseFlow?.ExportFare ?? 0m));
+            (storehouseFlow?.Purchase ?? 0m),
+            (storehouseFlow?.Sale ?? 0m),
+            (storehouseFlow?.PurchaseCost ?? 0m),
+            (storehouseFlow?.SaleValue ?? 0m),
+            (storehouseFlow?.SaleCost ?? 0m),
+            0m,
+            0m));
 
         foreach (var transport in transports)
         {
@@ -41,10 +39,10 @@ public sealed record ProductTransactionRow(
             rows.Add(Create(
                 transportNames.GetValueOrDefault(transport.Route?.RemoteTown,transport.Id),
                 asset?.Purchase ?? 0m,
-                asset?.PurchasePrice ?? 0m,
                 asset?.Sale ?? 0m,
-                asset?.SalePrice ?? 0m,
-                asset?.UnitCost ?? 0m,
+                (asset?.Purchase ?? 0m) * (asset?.PurchasePrice ?? 0m),
+                (asset?.Sale ?? 0m) * (asset?.SalePrice ?? 0m),
+                (asset?.Sale ?? 0m) * (asset?.UnitCost ?? 0m),
                 realized?.ImportFare ?? 0m,
                 realized?.ExportFare ?? 0m));
         }
@@ -55,18 +53,18 @@ public sealed record ProductTransactionRow(
     private static ProductTransactionRow Create(
         string location,
         decimal unitsBought,
-        decimal purchasePrice,
         decimal unitsSold,
-        decimal salePrice,
-        decimal unitCost,
+        decimal buyExpenditure,
+        decimal salesRevenue,
+        decimal cogs,
         decimal importFare,
         decimal exportFare) => new(
             location,
             unitsBought,
             unitsSold,
-            unitsBought * purchasePrice,
-            unitsSold * salePrice,
-            unitsSold * unitCost,
+            buyExpenditure,
+            salesRevenue,
+            cogs,
             importFare,
             exportFare);
 

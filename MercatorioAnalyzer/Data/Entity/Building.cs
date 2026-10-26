@@ -125,3 +125,69 @@ public class BuildingPreviousFlow
     [JsonProperty("expiration")] public decimal Expiration { get; set; } = 0.0m;
 
 }
+
+public class BuildingOperations
+{
+    [JsonProperty("total_flows")] public Dictionary<string, BuildingOperationFlow> TotalFlows { get; set; } = [];
+    [JsonProperty("operations")] public List<BuildingOperation> Operations { get; set; } = [];
+}
+
+public class BuildingOperationFlow
+{
+    [JsonProperty("projection")] public BuildingOperationValues? Projection { get; set; }
+    [JsonProperty("realized")] public BuildingOperationValues? Realized { get; set; }
+    [JsonProperty("contracted")] public BuildingOperationValues? Contracted { get; set; }
+    [JsonProperty("discontinued")] public BuildingOperationValues? Discontinued { get; set; }
+}
+
+public class BuildingOperationValues
+{
+    [JsonProperty("production")] public decimal? Production { get; set; }
+    [JsonProperty("production_cost")] public decimal? ProductionCost { get; set; }
+    [JsonProperty("value_adjustment")] public decimal? ValueAdjustment { get; set; }
+    [JsonProperty("consumption")] public decimal? Consumption { get; set; }
+    [JsonProperty("consumption_cost")] public decimal? ConsumptionCost { get; set; }
+    [JsonProperty("expiration")] public decimal? Expiration { get; set; }
+    [JsonProperty("resident")] public decimal? Resident { get; set; }
+    [JsonProperty("resident_cost")] public decimal? ResidentCost { get; set; }
+    [JsonProperty("import")] public decimal? Import { get; set; }
+    [JsonProperty("import_cost")] public decimal? ImportCost { get; set; }
+    [JsonProperty("import_fare")] public decimal? ImportFare { get; set; }
+    [JsonProperty("inbound")] public decimal? Inbound { get; set; }
+    [JsonProperty("inbound_cost")] public decimal? InboundCost { get; set; }
+    [JsonProperty("outbound")] public decimal? Outbound { get; set; }
+    [JsonProperty("outbound_value")] public decimal? OutboundValue { get; set; }
+    [JsonProperty("outbound_cost")] public decimal? OutboundCost { get; set; }
+    [JsonProperty("purchase")] public decimal? Purchase { get; set; }
+    [JsonProperty("purchase_cost")] public decimal? PurchaseCost { get; set; }
+    [JsonProperty("sale")] public decimal? Sale { get; set; }
+    [JsonProperty("sale_value")] public decimal? SaleValue { get; set; }
+    [JsonProperty("sale_cost")] public decimal? SaleCost { get; set; }
+    [JsonProperty("export")] public decimal? Export { get; set; }
+    [JsonProperty("export_value")] public decimal? ExportValue { get; set; }
+    [JsonProperty("export_cost")] public decimal? ExportCost { get; set; }
+    [JsonProperty("export_fare")] public decimal? ExportFare { get; set; }
+    [JsonProperty("transfer")] public decimal? Transfer { get; set; }
+    [JsonProperty("shortfall")] public decimal? Shortfall { get; set; }
+    [JsonProperty("suppression")] public decimal? Suppression { get; set; }
+}
+
+public class BuildingOperation
+{
+    [JsonProperty("reference")] public string? Reference { get; set; }
+    [JsonProperty("recipe")] public string? Recipe { get; set; }
+    [JsonProperty("target")] public decimal? Target { get; set; }
+    [JsonProperty("volume")] public decimal? Volume { get; set; }
+    [JsonProperty("delivery_cost")] public BuildingOperationDeliveryCost? DeliveryCost { get; set; }
+    [JsonProperty("tax_rate")] public decimal? TaxRate { get; set; }
+    [JsonProperty("tax")] public decimal? Tax { get; set; }
+    [JsonProperty("bonus")] public decimal? Bonus { get; set; }
+    [JsonProperty("limitation")] public string? Limitation { get; set; }
+    [JsonProperty("flows")] public Dictionary<string, BuildingOperationFlow> Flows { get; set; } = [];
+}
+
+public class BuildingOperationDeliveryCost
+{
+    [JsonProperty("land_distance")] public decimal? LandDistance { get; set; }
+    [JsonProperty("ferry_fee")] public decimal? FerryFee { get; set; }
+}

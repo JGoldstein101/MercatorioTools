@@ -68,12 +68,14 @@ else
         errorMessage = null;
         try
         {
-            if (refreshStorehouse)
+            if (refreshStorehouse || storehouse.Operations is null)
             {
-                storehouse.building = await mercatorioApiClient.GetStorehouseAsync();
+                var storehouseData = await mercatorioApiClient.GetStorehouseDataAsync();
+                storehouse.building = storehouseData.Building;
+                storehouse.Operations = storehouseData.Operations;
             }
             var transports = await mercatorioApiClient.GetPlayerTransportsAsync();
-            rows = FinanceRow.Build(storehouse.building, transports);
+            rows = FinanceRow.Build(storehouse.Operations, transports);
         }
         catch (Exception ex)
         {
