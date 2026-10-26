@@ -1,6 +1,6 @@
 ﻿@inject PlayerContainer playerContainer
 @inject Storehouse storehouse
-@inject MercatorioApiClient apiClient
+@inject MercatorioApiClient mercatorioApiClient
 @page "/"
 @using MercatorioAnalyzer.Data.Client
 @using Newtonsoft.Json
@@ -29,8 +29,8 @@ Something something mercatorio line go up
         dataStatus = "Fetching";
         try
         {
-            playerContainer.playerData = await apiClient.GetPlayerDataAsync();
-            storehouse.building = await apiClient.GetStorehouseAsync();
+            playerContainer.playerData = await mercatorioApiClient.GetPlayerDataAsync();
+            storehouse.building = await mercatorioApiClient.GetStorehouseAsync();
             dataStatus = "Data fetched";
         } catch (Exception ex)
         {
