@@ -9,7 +9,12 @@ public sealed record ProductTransactionRow(
     decimal SalesRevenue,
     decimal Cogs,
     decimal ImportFare,
-    decimal ExportFare)
+    decimal ExportFare,
+    decimal ContractedInbound,
+    decimal ContractedInboundCost,
+    decimal ContractedOutbound,
+    decimal ContractedOutboundValue,
+    decimal ContractedOutboundCost)
 {
     public decimal Profit => SalesRevenue - Cogs - ExportFare;
 
@@ -21,6 +26,7 @@ public sealed record ProductTransactionRow(
     {
         var rows = new List<ProductTransactionRow>();
         var storehouseFlow = GetValue(storehouseOperations?.TotalFlows, productName)?.Realized;
+        var contractedFlow = GetValue(storehouseOperations?.TotalFlows, productName)?.Contracted;
 
         rows.Add(Create(
             "Storehouse",
@@ -30,21 +36,33 @@ public sealed record ProductTransactionRow(
             (storehouseFlow?.SaleValue ?? 0m),
             (storehouseFlow?.SaleCost ?? 0m),
             0m,
-            0m));
+            0m,
+            contractedFlow?.Inbound ?? 0m,
+            contractedFlow?.InboundCost ?? 0m,
+            contractedFlow?.Outbound ?? 0m,
+            contractedFlow?.OutboundValue ?? 0m,
+            contractedFlow?.OutboundCost ?? 0m));
 
         foreach (var transport in transports)
         {
             var asset = GetValue(transport.Route?.Account?.Assets, productName);
             var realized = GetValue(transport.Route?.Flows, productName)?.Realized; 
             rows.Add(Create(
-                transportNames.GetValueOrDefault(transport.Route?.RemoteTown,transport.Id),
+                transport.Route?.RemoteTown is string remoteTown && transportNames.TryGetValue(remoteTown, out var townName)
+                    ? townName
+                    : transport.Id,
                 asset?.Purchase ?? 0m,
                 asset?.Sale ?? 0m,
                 (asset?.Purchase ?? 0m) * (asset?.PurchasePrice ?? 0m),
                 (asset?.Sale ?? 0m) * (asset?.SalePrice ?? 0m),
                 (asset?.Sale ?? 0m) * (asset?.UnitCost ?? 0m),
                 realized?.ImportFare ?? 0m,
-                realized?.ExportFare ?? 0m));
+                realized?.ExportFare ?? 0m,
+                0m,
+                0m,
+                0m,
+                0m,
+                0m));
         }
 
         return rows;
@@ -58,7 +76,12 @@ public sealed record ProductTransactionRow(
         decimal salesRevenue,
         decimal cogs,
         decimal importFare,
-        decimal exportFare) => new(
+        decimal exportFare,
+        decimal contractedInbound,
+        decimal contractedInboundCost,
+        decimal contractedOutbound,
+        decimal contractedOutboundValue,
+        decimal contractedOutboundCost) => new(
             location,
             unitsBought,
             unitsSold,
@@ -66,7 +89,12 @@ public sealed record ProductTransactionRow(
             salesRevenue,
             cogs,
             importFare,
-            exportFare);
+            exportFare,
+            contractedInbound,
+            contractedInboundCost,
+            contractedOutbound,
+            contractedOutboundValue,
+            contractedOutboundCost);
 
     private static TValue? GetValue<TKey, TValue>(
         IDictionary<TKey, TValue>? values,
