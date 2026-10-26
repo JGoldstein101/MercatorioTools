@@ -11,7 +11,7 @@ public sealed record FinanceRow(
     decimal ContractedOutboundValue,
     decimal ContractedOutboundCost)
 {
-    public decimal Profit => Revenue - Cogs;
+    public decimal Profit => Revenue + ContractedOutboundValue - Cogs - ContractedOutboundCost;
 
     public static List<FinanceRow> Build(BuildingOperations? storehouseOperations, IEnumerable<Transport> transports)
     {
@@ -65,18 +65,6 @@ public sealed record FinanceRow(
 
         foreach (var transport in transports)
         {
-            foreach (var (item, asset) in transport.Route?.Account?.Assets ?? [])
-            {
-                if (asset is null)
-                {
-                    continue;
-                }
-                var sale = asset.Sale ?? 0m;
-                Add(item,
-                    (asset.Purchase ?? 0m) * (asset.PurchasePrice ?? 0m),
-                    sale * (asset.SalePrice ?? 0m),
-                    sale * (asset.UnitCost ?? 0m));
-            }
 
             foreach (var (item, flow) in transport.Route?.Flows ?? [])
             {
@@ -85,7 +73,7 @@ public sealed record FinanceRow(
                 {
                     continue;
                 }
-                Add(item, realized.ImportFare ?? 0m, 0m, realized.ExportFare ?? 0m);
+                Add(item, realized.ImportFare ?? 0m + realized.ImportCost ?? 0m, realized.ExportValue ?? 0m, realized.ExportCost ?? 0m + realized.ExportFare ?? 0m);
             }
         }
 
