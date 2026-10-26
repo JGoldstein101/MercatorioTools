@@ -1,6 +1,6 @@
 ﻿@inject PlayerContainer playerContainer
 @inject Storehouse storehouse
-@inject MercatorioApiClient apiClient
+@inject MercatorioApiClient mercatorioApiClient
 @page "/finances"
 @using MercatorioAnalyzer.Data.Client
 @using Microsoft.AspNetCore.Components.QuickGrid
@@ -70,9 +70,9 @@ else
         {
             if (refreshStorehouse)
             {
-                storehouse.building = await apiClient.GetStorehouseAsync();
+                storehouse.building = await mercatorioApiClient.GetStorehouseAsync();
             }
-            var transports = await apiClient.GetPlayerTransportsAsync();
+            var transports = await mercatorioApiClient.GetPlayerTransportsAsync();
             rows = FinanceRow.Build(storehouse.building, transports);
         }
         catch (Exception ex)

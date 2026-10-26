@@ -106,4 +106,11 @@ public class MercatorioApiClient(
         List<Product> productList = JsonConvert.DeserializeObject<List<Product>>(body) ?? throw new JsonException("The product response was empty");
         return productList;
     }
+
+    public async Task<Town> GetTownAsync(string townId)
+    {
+        var body = await makeRequest("towns/" + townId);
+        Town town = JsonConvert.DeserializeObject<Town>(body) ?? throw new JsonException("The town response was empty or invalid");
+        return town;
+    }
 }

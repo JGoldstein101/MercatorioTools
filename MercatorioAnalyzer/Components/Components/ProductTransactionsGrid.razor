@@ -1,0 +1,86 @@
+@using MercatorioAnalyzer.Data.Client
+@using MercatorioAnalyzer.Data.Entity
+@using Microsoft.AspNetCore.Components.QuickGrid
+@inject MercatorioApiClient mercatorioApiClient
+@inject PlayerContainer playerContainer
+@inject Storehouse storehouse
+
+<h3>Financial transactions</h3>
+
+<div>
+    <button class="btn btn-primary" @onclick="RefreshAsync" disabled="@isLoading">Refresh</button>
+</div>
+
+@if (isLoading)
+{
+    <p>Loading...</p>
+}
+else if (errorMessage is not null)
+{
+    <p role="alert">@errorMessage</p>
+}
+else
+{
+    <div class="product-transactions-grid">
+        <QuickGrid Class="table" Items="rows.AsQueryable()">
+            <PropertyColumn Property="@(row => row.Location)" Title="Location" Sortable="true" />
+            <PropertyColumn Property="@(row => row.UnitsSold)" Title="Units sold" Format="N2" Sortable="true" />
+            <PropertyColumn Property="@(row => row.ExportFare)" Title="Export fare" Format="N2" Sortable="true" />
+            <PropertyColumn Property="@(row => row.SalesRevenue)" Title="Sales revenue" Format="N2" Sortable="true" />
+            <PropertyColumn Property="@(row => row.Cogs)" Title="COGS" Format="N2" Sortable="true" />
+            <PropertyColumn Property="@(row => row.Profit)" Title="Profit" Format="N2" Sortable="true" />
+            <PropertyColumn Property="@(row => row.UnitsBought)" Title="Units bought" Format="N2" Sortable="true" />
+            <PropertyColumn Property="@(row => row.BuyExpenditure)" Title="Buy expenditure" Format="N2" Sortable="true" />
+            <PropertyColumn Property="@(row => row.ImportFare)" Title="Import fare" Format="N2" Sortable="true" />
+        </QuickGrid>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public string ProductName { get; set; } = string.Empty;
+
+    private List<ProductTransactionRow> rows = [];
+    private bool isLoading;
+    private string? errorMessage;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private Task RefreshAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            if (playerContainer.playerData is null)
+            {
+                errorMessage = "No player data loaded. Enter your credentials on the Home page to fetch it.";
+                return;
+            }
+
+            var storehouseTask = mercatorioApiClient.GetStorehouseAsync();
+            var transportsTask = mercatorioApiClient.GetPlayerTransportsAsync();
+
+            storehouse.building = await storehouseTask;
+            var transports = await transportsTask;
+            Dictionary<string, string> transportNames = new Dictionary<string, string>();
+            foreach(var transport in transports)
+            {
+                var transportName = await mercatorioApiClient.GetTownAsync(transport.Route.RemoteTown);
+                transportNames.Add(transport.Route.RemoteTown, transportName.Name);
+            }
+            rows = ProductTransactionRow.Build(ProductName, storehouse.building, transports, transportNames);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

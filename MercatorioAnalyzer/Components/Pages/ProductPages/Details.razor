@@ -25,6 +25,7 @@
             <dt class="col-sm-2">Classes</dt>
             <dd class="col-sm-10">@product.Classes[0]</dd>
         </dl>
+        <ProductTransactionsGrid ProductName="@product.Name" />
         <RecipeGrid Recipes="ProductRecipes" />
         <div>
             <a href="@($"/products")">Back to List</a>
