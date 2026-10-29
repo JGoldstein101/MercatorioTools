@@ -34,7 +34,7 @@ else
     {
         <div class="finances-grid">
             <QuickGrid Class="table" Items="rows.AsQueryable()">
-                <PropertyColumn Property="@(row => row.Item)" Title="Item" Sortable="true" InitialSortDirection="SortDirection.Ascending" IsDefaultSortColumn="true" />
+                <PropertyColumn Property="@(row => row.Item)" Title="Item" Sortable="true"/>
                 <PropertyColumn Property="@(row => row.Expenditure)" Title="Expenditure" Format="N2" Sortable="true" />
                 <PropertyColumn Property="@(row => row.Revenue)" Title="Revenue" Format="N2" Sortable="true" />
                 <PropertyColumn Property="@(row => row.Cogs)" Title="COGS" Format="N2" Sortable="true" />
@@ -43,7 +43,7 @@ else
                 <PropertyColumn Property="@(row => row.ContractedOutbound)" Title="Contracted outbound" Format="N2" Sortable="true" />
                 <PropertyColumn Property="@(row => row.ContractedOutboundValue)" Title="Outbound contract value" Format="N2" Sortable="true" />
                 <PropertyColumn Property="@(row => row.ContractedOutboundCost)" Title="Outbound contract cost" Format="N2" Sortable="true" />
-                <PropertyColumn Property="@(row => row.Profit)" Title="Profit" Format="N2" Sortable="true" />
+                <PropertyColumn Property="@(row => row.Profit)" Title="Profit" Format="N2" Sortable="true" IsDefaultSortColumn="true" InitialSortDirection="SortDirection.Descending" />
                 <TemplateColumn Context="row">
                     <a href="@($"products/details?name={row.Item}")">Details</a>
                 </TemplateColumn>

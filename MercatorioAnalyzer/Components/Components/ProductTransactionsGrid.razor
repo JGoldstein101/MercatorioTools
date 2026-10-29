@@ -44,7 +44,6 @@ else
 @code {
     [Parameter, EditorRequired]
     public string ProductName { get; set; } = string.Empty;
-
     private List<ProductTransactionRow> rows = [];
     private bool isLoading;
     private string? errorMessage;
@@ -70,9 +69,9 @@ else
             var transportsTask = mercatorioApiClient.GetPlayerTransportsAsync();
 
             var storehouseData = await storehouseTask;
-            var transports = await transportsTask;
             storehouse.building = storehouseData.Building;
             storehouse.Operations = storehouseData.Operations;
+            var transports = await transportsTask;
             Dictionary<string, string> transportNames = new Dictionary<string, string>();
             foreach(var transport in transports)
             {

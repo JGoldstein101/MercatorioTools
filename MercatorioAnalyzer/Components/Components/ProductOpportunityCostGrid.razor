@@ -1,0 +1,56 @@
+@using MercatorioAnalyzer.Data.Entity
+@using Microsoft.AspNetCore.Components.QuickGrid
+@inject Storehouse storehouse
+
+<h3>Opportunity cost</h3>
+@{
+    var data = opportunityData;
+}
+
+@if (data.Inputs.Count == 0)
+{
+    <p>No inputs with positive current-turn realized domestic or export sales were found in this product's recipes named in the storehouse's current operations.</p>
+}
+else
+{
+    <div class="product-opportunity-grid">
+        <QuickGrid Class="table" Items="BuildGridRows(data)">
+            <PropertyColumn Property="@(row => row.Product)" Title="Input product" Sortable="false" />
+            <TemplateColumn Title="Input quantity" Sortable="false">
+                @(context.InputQuantity.HasValue ? FormatValue(context.InputQuantity) : "")
+            </TemplateColumn>
+            <TemplateColumn Title="Average profit" Sortable="false">
+                @(context.InputQuantity.HasValue ? FormatValue(context.AverageProfit) : "")
+            </TemplateColumn>
+            <TemplateColumn Title="Total possible profit" Sortable="false">
+                @FormatValue(context.TotalPossibleProfit)
+            </TemplateColumn>
+        </QuickGrid>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<Recipe> Recipes { get; set; } = [];
+
+    private sealed record GridRow(
+        string Product,
+        decimal? InputQuantity,
+        decimal? AverageProfit,
+        decimal? TotalPossibleProfit);
+
+    private static IQueryable<GridRow> BuildGridRows(ProductOpportunityCostData data) =>
+        data.Inputs
+            .Select(input => new GridRow(
+                input.Product,
+                input.InputQuantity,
+                input.CurrentTurnProfitPerUnit,
+                input.TotalPossibleProfit))
+            .Append(new GridRow("Total (available profits)", null, null, data.TotalPossibleProfit))
+            .AsQueryable();
+
+    private ProductOpportunityCostData opportunityData =>
+        ProductOpportunityCostData.Build(Recipes, storehouse.Operations);
+
+    private static string FormatValue(decimal? value) => value?.ToString("N2") ?? "N/A";
+}

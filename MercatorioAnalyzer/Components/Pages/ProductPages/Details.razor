@@ -4,7 +4,6 @@
 @using MercatorioAnalyzer.Data.Client
 @using MercatorioAnalyzer.Data.Entity
 @using Microsoft.EntityFrameworkCore
-@using Microsoft.EntityFrameworkCore
 @inject IDbContextFactory<MercatorioAnalyzer.Data.Client.MercatorioSqliteDBContext> DbFactory
 @inject NavigationManager NavigationManager
 @inject Storehouse storehouse
@@ -25,7 +24,8 @@
             <dt class="col-sm-2">Classes</dt>
             <dd class="col-sm-10">@product.Classes[0]</dd>
         </dl>
-        <ProductTransactionsGrid ProductName="@product.Name" />
+        <ProductTransactionsGrid ProductName="@product.Name"/>
+        <ProductOpportunityCostGrid Recipes="productRecipes" />
         <RecipeGrid Recipes="ProductRecipes" />
         <div>
             <a href="@($"/products")">Back to List</a>
@@ -37,7 +37,7 @@
     private Product? product;
     private List<Recipe> productRecipes = new List<Recipe>();
     [SupplyParameterFromQuery]
-    private string Name { get; set; }
+    private string Name { get; set; } = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -47,6 +47,7 @@
         if (product is null)
         {
             NavigationManager.NotFound();
+            return;
         }
         productRecipes = await GetProductRecipesAsync(context, product.Name);
     }
